@@ -1,24 +1,32 @@
 package riakcs_start_manager
 
 import (
-	"github.com/cloudfoundry-incubator/riakcs_ctrl/os_helper"
 	"strings"
+	"time"
+
+	"github.com/cloudfoundry-incubator/riakcs_ctrl/os_helper"
 )
 
 type RiakCSStartManager struct {
-	vmArgsFileLocation    string
-	appConfigFileLocation string
-	osHelper              os_helper.OsHelper
+	osHelper                 os_helper.OsHelper
+	vmArgsFileLocation       string
+	appConfigFileLocation    string
+	riakCsExecutableLocation string
+	riakCsPidFileLocation    string
 }
 
 func New(osHelper os_helper.OsHelper,
 	vmArgsFileLocation string,
 	appConfigFileLocation string,
+	riakCsExecutableLocation string,
+	riakCsPidFileLocation string,
 ) *RiakCSStartManager {
 	return &RiakCSStartManager{
-		vmArgsFileLocation:    vmArgsFileLocation,
-		appConfigFileLocation: appConfigFileLocation,
-		osHelper:              osHelper,
+		osHelper:                 osHelper,
+		vmArgsFileLocation:       vmArgsFileLocation,
+		appConfigFileLocation:    appConfigFileLocation,
+		riakCsExecutableLocation: riakCsExecutableLocation,
+		riakCsPidFileLocation:    riakCsPidFileLocation,
 	}
 }
 
@@ -32,6 +40,22 @@ func (m *RiakCSStartManager) Execute() {
 	if err != nil {
 		panic(err)
 	}
+
+	_, err = m.osHelper.RunCommand(m.riakCsExecutableLocation, "start")
+	if err != nil {
+		panic(err)
+	}
+
+	// We sleep to ensure the PID exists when we query for it.
+	time.Sleep(2 * time.Second)
+
+	// Get the PID and write it to the pidfile
+	var pid string
+	pid, err = m.osHelper.RunCommand("pgrep", "-f", "'beam.*riak-cs'")
+	if err != nil {
+		panic(err)
+	}
+	err = m.osHelper.WriteStringToFile(m.riakCsPidFileLocation, pid)
 
 	return
 }

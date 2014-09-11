@@ -33,6 +33,16 @@ type FakeOsHelper struct {
 	writeStringToFileReturns struct {
 		result1 error
 	}
+	RunCommandStub        func(executable string, args ...string) (string, error)
+	runCommandMutex       sync.RWMutex
+	runCommandArgsForCall []struct {
+		executable string
+		args       []string
+	}
+	runCommandReturns struct {
+		result1 string
+		result2 error
+	}
 }
 
 func (fake *FakeOsHelper) GetIp() (string, error) {
@@ -124,6 +134,40 @@ func (fake *FakeOsHelper) WriteStringToFileReturns(result1 error) {
 	fake.writeStringToFileReturns = struct {
 		result1 error
 	}{result1}
+}
+
+func (fake *FakeOsHelper) RunCommand(executable string, args ...string) (string, error) {
+	fake.runCommandMutex.Lock()
+	defer fake.runCommandMutex.Unlock()
+	fake.runCommandArgsForCall = append(fake.runCommandArgsForCall, struct {
+		executable string
+		args       []string
+	}{executable, args})
+	if fake.RunCommandStub != nil {
+		return fake.RunCommandStub(executable, args...)
+	} else {
+		return fake.runCommandReturns.result1, fake.runCommandReturns.result2
+	}
+}
+
+func (fake *FakeOsHelper) RunCommandCallCount() int {
+	fake.runCommandMutex.RLock()
+	defer fake.runCommandMutex.RUnlock()
+	return len(fake.runCommandArgsForCall)
+}
+
+func (fake *FakeOsHelper) RunCommandArgsForCall(i int) (string, []string) {
+	fake.runCommandMutex.RLock()
+	defer fake.runCommandMutex.RUnlock()
+	return fake.runCommandArgsForCall[i].executable, fake.runCommandArgsForCall[i].args
+}
+
+func (fake *FakeOsHelper) RunCommandReturns(result1 string, result2 error) {
+	fake.RunCommandStub = nil
+	fake.runCommandReturns = struct {
+		result1 string
+		result2 error
+	}{result1, result2}
 }
 
 var _ os_helper.OsHelper = new(FakeOsHelper)

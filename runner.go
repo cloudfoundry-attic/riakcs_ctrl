@@ -19,6 +19,18 @@ var appConfigFileLocation = flag.String(
 	"Specifies the location of the app config",
 )
 
+var riakCsExecutableLocation = flag.String(
+	"riakCsExecutable",
+	"",
+	"Specifies the location of the RiakCS executable",
+)
+
+var riakCsPidFileLocation = flag.String(
+	"riakCsPidFile",
+	"",
+	"Specifies the location of the RiakCS PID file",
+)
+
 func main() {
 	flag.Parse()
 	osHelper := os_helper.New()
@@ -26,6 +38,8 @@ func main() {
 		*osHelper,
 		*vmArgsFileLocation,
 		*appConfigFileLocation,
+		*riakCsExecutableLocation,
+		*riakCsPidFileLocation,
 	)
 	mgr.Execute()
 

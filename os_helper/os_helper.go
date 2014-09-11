@@ -4,6 +4,7 @@ import (
 	"io/ioutil"
 	"net"
 	"os"
+	"os/exec"
 )
 
 type OsHelperImpl struct{}
@@ -16,6 +17,7 @@ type OsHelper interface {
 	GetIp() (string, error)
 	ReadFile(filename string) (string, error)
 	WriteStringToFile(filename string, contents string) error
+	RunCommand(executable string, args ...string) (string, error)
 }
 
 func (m OsHelperImpl) GetIp() (string, error) {
@@ -45,4 +47,14 @@ func (m OsHelperImpl) ReadFile(filename string) (string, error) {
 func (m OsHelperImpl) WriteStringToFile(filename string, contents string) error {
 	err := ioutil.WriteFile(filename, []byte(contents), 0644)
 	return err
+}
+
+// Runs command with stdout and stderr pipes connected to process
+func (h OsHelperImpl) RunCommand(executable string, args ...string) (string, error) {
+	cmd := exec.Command(executable, args...)
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		return string(out), err
+	}
+	return string(out), nil
 }
