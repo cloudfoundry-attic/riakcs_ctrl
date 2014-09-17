@@ -31,6 +31,12 @@ var riakCsPidFileLocation = flag.String(
 	"Specifies the location of the RiakCS PID file",
 )
 
+var ip = flag.String(
+	"ip",
+	"",
+	"My ip - find binding to Riak and RiakCS",
+)
+
 func main() {
 	flag.Parse()
 	osHelper := os_helper.New()
@@ -40,6 +46,7 @@ func main() {
 		*appConfigFileLocation,
 		*riakCsExecutableLocation,
 		*riakCsPidFileLocation,
+		*ip,
 	)
 	mgr.Execute()
 

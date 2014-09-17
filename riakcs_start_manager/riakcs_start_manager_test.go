@@ -19,9 +19,10 @@ var _ = Describe("RiakCSStartManager", func() {
 	appConfigFileLocation := "/another-unused-location"
 	riakCsExecutableLocation := "/riak-cs-location"
 	riakCsPidFileLocation := "/riak-cs-pid-file-location"
+	fakeIp := "1.2.3.4"
 
-	vmArgsFileContents := "VM ARGS: This is our IP address: 127.0.0.1. In case you missed it, it's 127.0.0.1"
-	appConfigFileContents := "APP CONFIG: This is our IP address: 127.0.0.1. In case you missed it, it's 127.0.0.1"
+	vmArgsFileContents := "VM ARGS: This is our IP address: 127.0.0.1.\n In case you missed it, it's 127.0.0.1"
+	appConfigFileContents := "APP CONFIG: This is our IP address: 127.0.0.1.\n In case you missed it, it's 127.0.0.1"
 
 	Context("during normal boot", func() {
 		BeforeEach(func() {
@@ -33,6 +34,7 @@ var _ = Describe("RiakCSStartManager", func() {
 				appConfigFileLocation,
 				riakCsExecutableLocation,
 				riakCsPidFileLocation,
+				fakeIp,
 			)
 		})
 
@@ -46,18 +48,15 @@ var _ = Describe("RiakCSStartManager", func() {
 				panic("Unrecognized filepath - please update test.")
 			}
 
-			fakeIp := "1.2.3.4"
-			fakeOsHelper.GetIpReturns(fakeIp, nil)
-
 			mgr.Execute()
 
 			filepath0, contents0 := fakeOsHelper.WriteStringToFileArgsForCall(0)
 			Expect(filepath0).To(Equal(vmArgsFileLocation))
-			Expect(contents0).To(Equal("VM ARGS: This is our IP address: " + fakeIp + ". In case you missed it, it's " + fakeIp))
+			Expect(contents0).To(Equal("VM ARGS: This is our IP address: " + fakeIp + ".\n In case you missed it, it's " + fakeIp))
 
 			filepath1, contents1 := fakeOsHelper.WriteStringToFileArgsForCall(1)
 			Expect(filepath1).To(Equal(appConfigFileLocation))
-			Expect(contents1).To(Equal("APP CONFIG: This is our IP address: " + fakeIp + ". In case you missed it, it's " + fakeIp))
+			Expect(contents1).To(Equal("APP CONFIG: This is our IP address: " + fakeIp + ".\n In case you missed it, it's " + fakeIp))
 		})
 
 		It("calls the RiakCS start script", func() {
@@ -70,13 +69,13 @@ var _ = Describe("RiakCSStartManager", func() {
 
 		// There is no way to directly test that we called time.Sleep, nor exactly where in the function we called it.
 		// This is the best we can do.
-		It("takes between two and three seconds to execute", func() {
+		It("takes between one and sixty-one seconds to execute", func() {
 			startTime := time.Now()
 			mgr.Execute()
-			endTime := time.Now()
 
-			Expect(endTime.After(startTime.Add(2 * time.Second))).To(BeTrue())
-			Expect(endTime.After(startTime.Add(3 * time.Second))).To(BeFalse())
+			elapsedTime := time.Since(startTime)
+			Expect(elapsedTime > 1 * time.Second).To(BeTrue())
+			Expect(elapsedTime < 61 * time.Second).To(BeTrue())
 		})
 
 		It("captures the pid of riakCS and writes that to a file", func() {
@@ -94,7 +93,7 @@ var _ = Describe("RiakCSStartManager", func() {
 
 			executable, args := fakeOsHelper.RunCommandArgsForCall(1)
 			Expect(executable).To(Equal("pgrep"))
-			Expect(args).To(Equal([]string{"-f", "'beam.*riak-cs'"}))
+			Expect(args).To(Equal([]string{"-f", "beam.*riak-cs"}))
 
 			// The first two file writes are the config files. The third is the pidfile.
 			filepath, contents := fakeOsHelper.WriteStringToFileArgsForCall(2)

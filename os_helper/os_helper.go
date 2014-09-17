@@ -2,8 +2,6 @@ package os_helper
 
 import (
 	"io/ioutil"
-	"net"
-	"os"
 	"os/exec"
 )
 
@@ -14,24 +12,9 @@ func New() *OsHelperImpl {
 }
 
 type OsHelper interface {
-	GetIp() (string, error)
 	ReadFile(filename string) (string, error)
 	WriteStringToFile(filename string, contents string) error
 	RunCommand(executable string, args ...string) (string, error)
-}
-
-func (m OsHelperImpl) GetIp() (string, error) {
-	name, err := os.Hostname()
-	if err != nil {
-		return "", err
-	}
-
-	addrs, err := net.LookupHost(name)
-	if err != nil {
-		return "", err
-	}
-
-	return addrs[0], nil
 }
 
 // Read the whole file, panic on err
