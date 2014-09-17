@@ -74,7 +74,6 @@ func (m *RiakCSStartManager) Execute() {
 }
 
 func (m *RiakCSStartManager) replaceAllIpInFiles(newIp string) error {
-	ipToReplace := "127.0.0.1"
 	vmArgsFileContents, err := m.osHelper.ReadFile(m.vmArgsFileLocation)
 	if err != nil {
 		return err
