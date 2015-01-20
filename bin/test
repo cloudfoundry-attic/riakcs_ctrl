@@ -8,4 +8,4 @@ if ! which go 2>/dev/null; then
   exit 1
 fi
 
-go test -v ./riakcs_start_manager
+go test -v -race ./riakcs_start_manager
