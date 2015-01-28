@@ -4,14 +4,13 @@ import (
 	"strings"
 	"time"
 
-	manager "."
 	os_fakes "github.com/cloudfoundry-incubator/riakcs_ctrl/os_helper/fakes"
+	manager "github.com/cloudfoundry-incubator/riakcs_ctrl/riakcs_start_manager"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("RiakCSStartManager", func() {
-
 	var mgr *manager.RiakCSStartManager
 	var fakeOsHelper *os_fakes.FakeOsHelper
 
@@ -74,8 +73,8 @@ var _ = Describe("RiakCSStartManager", func() {
 			mgr.Execute()
 
 			elapsedTime := time.Since(startTime)
-			Expect(elapsedTime > 1 * time.Second).To(BeTrue())
-			Expect(elapsedTime < 61 * time.Second).To(BeTrue())
+			Expect(elapsedTime > 1*time.Second).To(BeTrue())
+			Expect(elapsedTime < 61*time.Second).To(BeTrue())
 		})
 
 		It("captures the pid of riakCS and writes that to a file", func() {
