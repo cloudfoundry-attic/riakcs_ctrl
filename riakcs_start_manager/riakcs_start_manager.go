@@ -70,7 +70,6 @@ func (m *RiakCSStartManager) Execute() {
 		}
 	}
 	panic(errors.New("Timed out looking for RiakCS PID"))
-	return
 }
 
 func (m *RiakCSStartManager) replaceAllIpInFiles(newIp string) error {
