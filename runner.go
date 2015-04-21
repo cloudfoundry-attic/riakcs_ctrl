@@ -2,52 +2,29 @@ package main
 
 import (
 	"flag"
+	"os"
 
 	"github.com/cloudfoundry-incubator/riakcs_ctrl/os_helper"
 	manager "github.com/cloudfoundry-incubator/riakcs_ctrl/riakcs_start_manager"
-)
-
-var vmArgsFileLocation = flag.String(
-	"vmArgsFile",
-	"",
-	"Specifies the location of the vm args",
-)
-
-var appConfigFileLocation = flag.String(
-	"appConfigFile",
-	"",
-	"Specifies the location of the app config",
-)
-
-var riakCsExecutableLocation = flag.String(
-	"riakCsExecutable",
-	"",
-	"Specifies the location of the RiakCS executable",
-)
-
-var riakCsPidFileLocation = flag.String(
-	"riakCsPidFile",
-	"",
-	"Specifies the location of the RiakCS PID file",
-)
-
-var ip = flag.String(
-	"ip",
-	"",
-	"My ip - find binding to Riak and RiakCS",
+	"github.com/pivotal-cf-experimental/service-config"
 )
 
 func main() {
-	flag.Parse()
+
+	flags := flag.NewFlagSet(os.Args[0], flag.ExitOnError)
+
+	serviceConfig := service_config.New()
+	serviceConfig.AddFlags(flags)
+
+	flags.Parse(os.Args[1:])
+
+	var config manager.Config
+	serviceConfig.Read(&config)
+
 	osHelper := os_helper.New()
 	mgr := manager.New(
 		*osHelper,
-		*vmArgsFileLocation,
-		*appConfigFileLocation,
-		*riakCsExecutableLocation,
-		*riakCsPidFileLocation,
-		*ip,
+		config,
 	)
 	mgr.Execute()
-
 }

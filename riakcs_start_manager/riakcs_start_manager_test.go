@@ -1,6 +1,7 @@
 package riakcs_start_manager_test
 
 import (
+	"fmt"
 	"strings"
 	"time"
 
@@ -11,37 +12,40 @@ import (
 )
 
 var _ = Describe("RiakCSStartManager", func() {
-	var mgr *manager.RiakCSStartManager
-	var fakeOsHelper *os_fakes.FakeOsHelper
-
-	vmArgsFileLocation := "/some-unused-location"
-	appConfigFileLocation := "/another-unused-location"
-	riakCsExecutableLocation := "/riak-cs-location"
-	riakCsPidFileLocation := "/riak-cs-pid-file-location"
-	fakeIp := "1.2.3.4"
-
-	vmArgsFileContents := "VM ARGS: This is our IP address: 127.0.0.1.\n In case you missed it, it's 127.0.0.1"
-	appConfigFileContents := "APP CONFIG: This is our IP address: 127.0.0.1.\n In case you missed it, it's 127.0.0.1"
+	var (
+		mgr                   *manager.RiakCSStartManager
+		fakeOsHelper          *os_fakes.FakeOsHelper
+		config                manager.Config
+		vmArgsFileContents    string
+		appConfigFileContents string
+	)
 
 	Context("during normal boot", func() {
 		BeforeEach(func() {
+			vmArgsFileContents = "VM ARGS: This is our IP address: 127.0.0.1.\n In case you missed it, it's 127.0.0.1"
+			appConfigFileContents = "APP CONFIG: This is our IP address: 127.0.0.1.\n In case you missed it, it's 127.0.0.1"
+
+			config = manager.Config{
+				VmArgsFileLocation:       "/some-unused-location",
+				AppConfigFileLocation:    "/another-unused-location",
+				RiakCsExecutableLocation: "/riak-cs-location",
+				RiakCsPidFileLocation:    "/riak-cs-pid-file-location",
+				IP: "1.2.3.4",
+			}
+
 			fakeOsHelper = new(os_fakes.FakeOsHelper)
 
 			mgr = manager.New(
 				fakeOsHelper,
-				vmArgsFileLocation,
-				appConfigFileLocation,
-				riakCsExecutableLocation,
-				riakCsPidFileLocation,
-				fakeIp,
+				config,
 			)
 		})
 
 		It("replaces all instances of 127.0.0.1 with host ip in config files", func() {
 			fakeOsHelper.ReadFileStub = func(filepath string) (string, error) {
-				if filepath == vmArgsFileLocation {
+				if filepath == config.VmArgsFileLocation {
 					return vmArgsFileContents, nil
-				} else if filepath == appConfigFileLocation {
+				} else if filepath == config.AppConfigFileLocation {
 					return appConfigFileContents, nil
 				}
 				panic("Unrecognized filepath - please update test.")
@@ -50,19 +54,23 @@ var _ = Describe("RiakCSStartManager", func() {
 			mgr.Execute()
 
 			filepath0, contents0 := fakeOsHelper.WriteStringToFileArgsForCall(0)
-			Expect(filepath0).To(Equal(vmArgsFileLocation))
-			Expect(contents0).To(Equal("VM ARGS: This is our IP address: " + fakeIp + ".\n In case you missed it, it's " + fakeIp))
+			Expect(filepath0).To(Equal(config.VmArgsFileLocation))
+			Expect(contents0).To(Equal(
+				fmt.Sprintf("VM ARGS: This is our IP address: %s.\n In case you missed it, it's %s", config.IP, config.IP),
+			))
 
 			filepath1, contents1 := fakeOsHelper.WriteStringToFileArgsForCall(1)
-			Expect(filepath1).To(Equal(appConfigFileLocation))
-			Expect(contents1).To(Equal("APP CONFIG: This is our IP address: " + fakeIp + ".\n In case you missed it, it's " + fakeIp))
+			Expect(filepath1).To(Equal(config.AppConfigFileLocation))
+			Expect(contents1).To(Equal(
+				fmt.Sprintf("APP CONFIG: This is our IP address: %s.\n In case you missed it, it's %s", config.IP, config.IP),
+			))
 		})
 
 		It("calls the RiakCS start script", func() {
 			mgr.Execute()
 
 			executable, args := fakeOsHelper.RunCommandArgsForCall(0)
-			Expect(executable).To(Equal(riakCsExecutableLocation))
+			Expect(executable).To(Equal(config.RiakCsExecutableLocation))
 			Expect(args).To(Equal([]string{"start"}))
 		})
 
@@ -80,7 +88,7 @@ var _ = Describe("RiakCSStartManager", func() {
 		It("captures the pid of riakCS and writes that to a file", func() {
 			fakeRiakPid := "12345"
 			fakeOsHelper.RunCommandStub = func(executable string, args ...string) (string, error) {
-				if executable == riakCsExecutableLocation {
+				if executable == config.RiakCsExecutableLocation {
 					return "", nil
 				} else if executable == "pgrep" {
 					return fakeRiakPid, nil
@@ -96,7 +104,7 @@ var _ = Describe("RiakCSStartManager", func() {
 
 			// The first two file writes are the config files. The third is the pidfile.
 			filepath, contents := fakeOsHelper.WriteStringToFileArgsForCall(2)
-			Expect(filepath).To(Equal(riakCsPidFileLocation))
+			Expect(filepath).To(Equal(config.RiakCsPidFileLocation))
 			Expect(contents).To(Equal(fakeRiakPid))
 		})
 	})
