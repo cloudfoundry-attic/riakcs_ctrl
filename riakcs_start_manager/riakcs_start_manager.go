@@ -15,11 +15,11 @@ func (m *RiakCSStartManager) printWithTimestamp(output string) {
 }
 
 type Config struct {
-	VmArgsFileLocation       string
-	AppConfigFileLocation    string
-	RiakCsExecutableLocation string
-	RiakCsPidFileLocation    string
-	IP                       string
+	VmArgsFileLocation       string `yaml:"VmArgsFileLocation"`
+	AppConfigFileLocation    string `yaml:"AppConfigFileLocation"`
+	RiakCsExecutableLocation string `yaml:"RiakCsExecutableLocation"`
+	RiakCsPidFileLocation    string `yaml:"RiakCsPidFileLocation"`
+	IP                       string `yaml:"IP"`
 }
 
 type RiakCSStartManager struct {
